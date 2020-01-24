@@ -38,7 +38,7 @@ namespace Oxide.Plugins
         private int LogCurrentTeams()
         {
             var teams = RelationshipManager.Instance.teams;
-            if (!teams?.Any() == true) return 0;
+            if (teams?.Any() != true) return 0;
 
             foreach (var team in teams)
             {
