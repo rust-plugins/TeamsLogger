@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "NickRimmer", "1.0")]
+    [Info("Teams Logger", "NickRimmer", "1.1")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
