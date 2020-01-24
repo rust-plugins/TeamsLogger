@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("TeamsLogger", "NickRimmer", "1.0")]
+    [Info("Teams Logger", "NickRimmer", "1.0")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
@@ -35,11 +35,9 @@ namespace Oxide.Plugins
             return false;
         }
 
-        private int LogCurrentTeams()
+        private void LogCurrentTeams()
         {
             var teams = RelationshipManager.Instance.teams;
-            if (teams?.Any() != true) return 0;
-
             foreach (var team in teams)
             {
                 LogKey(
@@ -47,75 +45,73 @@ namespace Oxide.Plugins
                     team.Key,
                     string.Join(", ", team.Value.members.Select(GetUserInfo)));
             }
-
-            return teams.Count;
         }
 
         private string GetUserInfo(ulong userId)
         {
-            var user = Player.Players.FirstOrDefault(x => x.userID == userId);
+            var user = covalence.Players.FindPlayerById(userId.ToString());
             return user == null
                 ? userId.ToString()
-                : $"{user.displayName} ({userId})";
+                : $"{user.Name} ({userId})";
         }
         #endregion
 
         #region Team hooks
 
-        object OnTeamInvite(BasePlayer inviter, BasePlayer target) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
-            inviter.Team?.teamID.ToString() ?? "-",
+        void OnTeamInvite(BasePlayer inviter, BasePlayer target) => LogKey(
+            "OnTeamInvite",
+            inviter.Team.teamID,
             inviter.displayName,
             inviter.userID,
             target.displayName,
             target.userID);
 
-        object OnTeamRejectInvite(BasePlayer rejector, RelationshipManager.PlayerTeam team) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+        void OnTeamRejectInvite(BasePlayer rejector, RelationshipManager.PlayerTeam team) => LogKey(
+            "OnTeamRejectInvite",
             team.teamID,
             rejector.displayName,
             rejector.userID);
 
-        object OnTeamPromote(RelationshipManager.PlayerTeam team, BasePlayer newLeader) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+        void OnTeamPromote(RelationshipManager.PlayerTeam team, BasePlayer newLeader) => LogKey(
+            "OnTeamPromote",
             team.teamID,
             newLeader.displayName,
             newLeader.userID);
 
-        object OnTeamLeave(RelationshipManager.PlayerTeam team, BasePlayer player) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+        void OnTeamLeave(RelationshipManager.PlayerTeam team, BasePlayer player) => LogKey(
+            "OnTeamLeave",
             team.teamID,
             player.displayName,
             player.userID,
             player.userID == team.teamLeader);
 
-        object OnTeamKick(RelationshipManager.PlayerTeam team, BasePlayer player) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+        void OnTeamKick(RelationshipManager.PlayerTeam team, BasePlayer player) => LogKey(
+            "OnTeamKick",
             team.teamID,
             player.displayName,
             player.Team);
 
-        object OnTeamAcceptInvite(RelationshipManager.PlayerTeam team, BasePlayer player) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+        void OnTeamAcceptInvite(RelationshipManager.PlayerTeam team, BasePlayer player) => LogKey(
+            "OnTeamAcceptInvite",
             team.teamID,
             player.displayName,
             player.userID);
 
         void OnTeamDisbanded(RelationshipManager.PlayerTeam team) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+            "OnTeamDisbanded",
             team.teamID,
             team.GetLeader().displayName,
             team.teamLeader);
 
-        /*private object OnTeamUpdate(ulong currentTeam, ulong newTeam, BasePlayer player) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+        /*private void OnTeamUpdate(ulong currentTeam, ulong newTeam, BasePlayer player) => LogKey(
+            "OnTeamUpdate",
             newTeam,
             player.displayName,
             player.userID,
             currentTeam);*/
 
         private void OnTeamCreated(BasePlayer player, RelationshipManager.PlayerTeam team) => LogKey(
-            System.Reflection.MethodBase.GetCurrentMethod().Name,
+            "OnTeamCreated",
             team.teamID, 
             player.displayName,
             player.userID);
@@ -131,18 +127,16 @@ namespace Oxide.Plugins
         }
         protected override void LoadDefaultConfig() => Config.WriteObject(new PluginConfig(), true);
 
-        private object LogKey(string key, params object[] args) =>
+        private void LogKey(string key, params object[] args) =>
             LogMessage(this[key, args]);
 
-        private object LogMessage(string message)
+        private void LogMessage(string message)
         {
             if(_config.PrintToConsole) PrintToConsole(message);
             if(_config.PrintToFile) PrintToFile(message);
-            return null;
         }
 
-        private void PrintToConsole(string message) =>
-            Puts(message.Replace('\t', ' '));
+        private void PrintToConsole(string message) => Puts(message);
 
         private void PrintToFile(string message)
         {
@@ -167,7 +161,7 @@ namespace Oxide.Plugins
                 this["OnTeamCreated"] =      "Created {0}  | Player: '{1}' ({2}) created new team";
                 this["OnTeamDisbanded"] =    "Disband {0}  | Team leader: '{1}' ({2})";
                 this["OnTeamLeave"] =        "Leave {0}    | Player: '{1}' ({2}, is leader: {3})";
-                this["OnTeamInvite"] =       "Invite {0}   | Player '{1}' ({2}) sent invite to '{3}' (4)";
+                this["OnTeamInvite"] =       "Invite {0}   | Player '{1}' ({2}) sent invite to '{3}' {4}";
                 this["OnTeamRejectInvite"] = "Reject {0}   | Player: '{1}' ({2}) rejected invite";
                 this["OnTeamPromote"] =      "Promote {0}  | Player: '{1}' ({2}) now is new leader";
                 this["OnTeamKick"] =         "Kick {0}     | Player: '{1}' ({2}) was kicked";
@@ -184,7 +178,7 @@ namespace Oxide.Plugins
                 this["OnTeamCreated"] =      "Создана {0}     | Игрок: '{1}' ({2}) создал новую группу";
                 this["OnTeamDisbanded"] =    "Удалена {0}     | Лидер: '{1}' ({2})";
                 this["OnTeamLeave"] =        "Покинул {0}     | Игрок: '{1}' ({2}, лидер: {3})";
-                this["OnTeamInvite"] =       "Приглашение {0} | Игрок '{1}' ({2}) отправил приглашение игроку '{3}' (4)";
+                this["OnTeamInvite"] =       "Приглашение {0} | Игрок '{1}' ({2}) отправил приглашение игроку '{3}' {4}";
                 this["OnTeamRejectInvite"] = "Отказ {0}       | Игрок: '{1}' ({2}) отказался вступать в группу";
                 this["OnTeamPromote"] =      "Лидер {0}       | Игрок: '{1}' ({2}) теперь новый лидер группы";
                 this["OnTeamKick"] =         "Изгнан {0}      | Игрок: '{1}' ({2}) был выгнан из команды";
