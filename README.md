@@ -1,8 +1,15 @@
 # TeamsLogger
-Simple logger for teams provides logging to console and/or own log file.
+Simple logger for teams provides additional logging. It can be configured to log into files or/and console output.
+
+# Installation
+To use this plugin with your Rust server, just copy `TeamsLogger.cs` into `\oxide\plugins` folder.  
+It will create default language files and default configuration.
+
+After plugin will be loaded, you can change configuration file.  
+Then restart plugin using command in server console `oxide.reload TeamsLogger`
 
 # Configuration
-You can change it in file `\oxide\config\TeamsLogger.json`
+You can find in file `\oxide\config\TeamsLogger.json`
 ```JSON
 {
   "Print logs to console": true,
