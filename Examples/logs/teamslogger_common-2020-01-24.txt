@@ -1,0 +1,6 @@
+17:36:22 Created 96 | Player: 'xan' (76561198051734570) created new team
+17:36:23 Leave 96   | Player: 'xan' (76561198051734570, is leader: True)
+17:36:23 Disband 96 | Team leader: 'xan' (76561198051734570)
+17:36:25 Created 97 | Player: 'xan' (76561198051734570) created new team
+17:36:26 Leave 97   | Player: 'xan' (76561198051734570, is leader: True)
+17:36:26 Disband 97 | Team leader: 'xan' (76561198051734570)
