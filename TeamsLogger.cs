@@ -1,4 +1,4 @@
-#define DISCORD_ENABLED
+#define DISCORD_INSTALLED
 
 using Oxide.Core;
 using System;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-#if DISCORD_ENABLED
+#if DISCORD_INSTALLED
 using Oxide.Ext.Discord;
 using Oxide.Ext.Discord.Attributes;
 using Oxide.Ext.Discord.DiscordObjects;
@@ -18,7 +18,7 @@ namespace Oxide.Plugins
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
-        #if DISCORD_ENABLED
+        #if DISCORD_INSTALLED
         [DiscordClient]
         private DiscordClient _client;
         private Channel _discordChannel;
@@ -34,16 +34,16 @@ namespace Oxide.Plugins
 
         void OnServerInitialized()
         {
-            #if DISCORD_ENABLED
+            #if DISCORD_INSTALLED
             if (_config.PrintToDiscord) InitDiscord();
             #else
-            if (_config.PrintToDiscord) PrintWarning("To enable Discord features, please define DISCORD_ENABLED directive");
+            if (_config.PrintToDiscord) PrintWarning("To enable Discord features, please define DISCORD_INSTALLED directive");
             #endif
         }
 
         private void Unload()
         {
-            #if DISCORD_ENABLED
+            #if DISCORD_INSTALLED
             if (_client != null) Discord.CloseClient(_client);
             #endif
         }
@@ -60,7 +60,7 @@ namespace Oxide.Plugins
 
         private void PrintToDiscord(string message)
         {
-            #if DISCORD_ENABLED
+            #if DISCORD_INSTALLED
             if (_client?.DiscordServer == null)
             {
                 PrintWarning("Discord doesn't connected");
@@ -77,7 +77,7 @@ namespace Oxide.Plugins
             message = $"{timestamp} | {message}";
             _discordChannel.CreateMessage(_client, message);
             #else
-            PrintWarning("To enable discord features, please define DISCORD_ENABLED directive");
+            PrintWarning("To enable discord features, please define DISCORD_INSTALLED directive");
             #endif
         }
 
@@ -120,7 +120,7 @@ namespace Oxide.Plugins
         #endregion
 
         #region Discord connection
-        #if DISCORD_ENABLED
+        #if DISCORD_INSTALLED
         private void InitDiscord()
         {
             Puts("Init Discord connection...");
