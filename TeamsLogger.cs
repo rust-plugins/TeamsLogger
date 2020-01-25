@@ -1,51 +1,32 @@
-#define DISCORD_NOT_INSTALLED
-
 using Oxide.Core;
 using System;
 using System.Linq;
+using UnityEngine;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-
-#if DISCORD_INSTALLED
-using Oxide.Ext.Discord;
-using Oxide.Ext.Discord.Attributes;
-using Oxide.Ext.Discord.DiscordObjects;
-#endif
+using System.Collections;
+using System.Text;
+using UnityEngine.Networking;
 
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "NickRimmer", "1.3")]
+    [Info("Teams Logger", "NickRimmer", "1.2")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
-        #if DISCORD_INSTALLED
-        [DiscordClient]
-        private DiscordClient _client;
-        private Channel _discordChannel;
-        #endif
-
         private PluginConfig _config;
+        private DiscordComponent _discord;
 
         void Init()
         {
             _config = Config.ReadObject<PluginConfig>();
             if (IsFirstRun()) LogCurrentTeams();
-        }
 
-        void OnServerInitialized()
-        {
-            #if DISCORD_INSTALLED
-            if (_config.PrintToDiscord) InitDiscord();
-            #else
-            if (_config.PrintToDiscord) PrintWarning("To enable Discord features, please define DISCORD_INSTALLED directive");
-            #endif
-        }
-
-        private void Unload()
-        {
-            #if DISCORD_INSTALLED
-            if (_client != null) Discord.CloseClient(_client);
-            #endif
+            if (!string.IsNullOrEmpty(_config.DiscordHookUrl))
+            {
+                var loader = new GameObject("WebObject");
+                _discord = loader.AddComponent<DiscordComponent>().Configure(_config.DiscordHookUrl);
+            }
         }
 
         private void PrintToConsole(string message) => Puts(message);
@@ -60,25 +41,16 @@ namespace Oxide.Plugins
 
         private void PrintToDiscord(string message)
         {
-            #if DISCORD_INSTALLED
-            if (_client?.DiscordServer == null)
+            if(_discord == null)
             {
-                PrintWarning("Discord doesn't connected");
-                return;
-            }
-
-            if (_discordChannel == null)
-            {
-                PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
+                PrintWarning("Discord wasn't configured, message can't be sent");
                 return;
             }
 
             var timestamp = DateTime.Now.ToString("HH:mm:ss");
             message = $"{timestamp} | {message}";
-            _discordChannel.CreateMessage(_client, message);
-            #else
-            PrintWarning("To enable discord features, please define DISCORD_INSTALLED directive");
-            #endif
+
+            _discord.SendTextMessage(message);
         }
 
         #region Log exist teams on first run
@@ -117,51 +89,6 @@ namespace Oxide.Plugins
                 ? userId.ToString()
                 : $"{user.Name} ({userId})";
         }
-        #endregion
-
-        #region Discord connection
-        #if DISCORD_INSTALLED
-        private void InitDiscord()
-        {
-            Puts("Init Discord connection...");
-            if (string.IsNullOrEmpty(_config.DiscordBot.ApiKey))
-            {
-                PrintError($"To enable Discord messages you need to specify 'DiscordConfig.ApiKey' value in config");
-                return;
-            }
-
-            Discord.CreateClient(this, _config.DiscordBot.ApiKey);
-        }
-
-        void Discord_GuildCreate(Guild guild)
-        {
-            if(_config.DiscordBot.EnableBotStatus)
-                _client.UpdateStatus(new Presence { Game = new Ext.Discord.DiscordObjects.Game
-                {
-                    Name = covalence.Server.Name,
-                    Type = ActivityType.Watching
-                }});
-
-            UpdateDiscordChannel();
-        }
-
-        void Discord_ChannelCreate(Channel channel) => UpdateDiscordChannel();
-        void Discord_ChannelUpdate(Channel updatedChannel, Channel oldChannel) => UpdateDiscordChannel();
-        void Discord_ChannelDelete(Channel channel) => UpdateDiscordChannel();
-        //void Discord_GuildUpdate(Guild guild) => UpdateDiscordChannel();
-
-        private void UpdateDiscordChannel()
-        {
-            _discordChannel = _client
-                .DiscordServer
-                .channels
-                .FirstOrDefault(x => x.name.Equals(_config.DiscordBot.ChannelName, StringComparison.InvariantCultureIgnoreCase));
-
-            if (_discordChannel == null) PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
-            else Puts($"Connected to discord channel: '{_discordChannel.name}' ({_discordChannel.id})");
-        }
-        
-        #endif
         #endregion
 
         #region Team hooks
@@ -302,24 +229,108 @@ namespace Oxide.Plugins
             [JsonProperty("Print logs to Discord")]
             public bool PrintToDiscord { get; set; } = false;
     
-            public PluginDiscordConfig DiscordBot = new PluginDiscordConfig();
-    
-            public class PluginDiscordConfig
-            {
-                [JsonProperty("Api key")] 
-                public string ApiKey { get; set; }
-    
-                [JsonProperty("Channel name")]
-                public string ChannelName { get; set; } = "teams-logger";
-    
-                [JsonProperty("Show server name in status")]
-                public bool EnableBotStatus { get; set; } = true;
-            }
+            [JsonProperty("Discord hook url")] 
+            public string DiscordHookUrl { get; set; }
         }
     
         private class PluginData
         {
             public bool FirstStart { get; set; } = true;
+        }
+    
+        #endregion
+    
+        #region Shared.Components
+
+        private class DiscordComponent : MonoBehaviour
+        {
+            private const float PostDelay = 1f;
+    
+            private readonly Queue<object> _queue = new Queue<object>();
+            private string _url;
+            private bool _busy = false;
+    
+            public DiscordComponent Configure(string url)
+            {
+                if (url == null) throw new ArgumentNullException(nameof(url));
+                _url = url;
+    
+                return this;
+            }
+    
+            public DiscordComponent SendTextMessage(string message, params object[] args)
+            {
+                message = args?.Any() == true ? string.Format(message, args) : message;
+                return AddQueue(new MessageRequest(message));
+            }
+    
+            #region Send requests to server
+    
+            private DiscordComponent AddQueue(object request)
+            {
+                _queue.Enqueue(request);
+    
+                if (!_busy)
+                    StartCoroutine(ProcessQueue());
+    
+                return this;
+            }
+    
+            private IEnumerator ProcessQueue()
+            {
+                if(_busy) yield break;
+                _busy = true;
+    
+                while (_queue.Any())
+                {
+                    var request = _queue.Dequeue();
+                    yield return ProcessRequest(request);
+                }
+    
+                _busy = false;
+            }
+    
+            private IEnumerator ProcessRequest(object request)
+            {
+                if (string.IsNullOrEmpty(_url))
+                {
+                    print("[ERROR] Discord webhook URL wasn't specified");
+                    yield break;
+                }
+    
+                var data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(request));
+                var uh = new UploadHandlerRaw(data) {contentType = "application/json"};
+                var www = UnityWebRequest.Post(_url, UnityWebRequest.kHttpVerbPOST);
+                www.uploadHandler = uh;
+    
+                yield return www.SendWebRequest();
+    
+                if (www.isNetworkError || www.isHttpError)
+                    print($"ERROR: {www.error} | {www.downloadHandler?.text}");
+    
+                www.Dispose();
+    
+                // to avoid spam requests to Discord
+                yield return new WaitForSeconds(PostDelay);
+            }
+    
+            #endregion
+    
+            #region Requests
+    
+            private class MessageRequest
+            {
+                [JsonProperty("content")]
+                public string Content { get; set; }
+    
+                public MessageRequest(string content)
+                {
+                    if (content == null) throw new ArgumentNullException(nameof(content));
+                    Content = content;
+                }
+            }
+    
+            #endregion
         }
     
         #endregion
