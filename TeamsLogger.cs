@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "NickRimmer", "1.2")]
+    [Info("Teams Logger", "NickRimmer", "1.4")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
