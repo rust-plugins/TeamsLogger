@@ -1,4 +1,10 @@
 {
+  "DiscordBot": {
+    "Api key": "FNoqwinpqupqwuefbweufbAa.dFNWNO.nbpc29bSNiuib198172bp0987b1",
+    "Channel name": "teams-logger",
+    "Show server name in status": true
+  },
   "Print logs to console": true,
+  "Print logs to Discord": true,
   "Print logs to file": true
 }
