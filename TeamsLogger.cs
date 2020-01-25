@@ -1,21 +1,84 @@
+#define DISCORD_NOT_INSTALLED
+
+using Oxide.Core;
 using System;
 using System.Linq;
-using Oxide.Core;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
+#if DISCORD_INSTALLED
+using Oxide.Ext.Discord;
+using Oxide.Ext.Discord.Attributes;
+using Oxide.Ext.Discord.DiscordObjects;
+#endif
+
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "NickRimmer", "1.1")]
+    [Info("Teams Logger", "NickRimmer", "1.2")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
+        #if DISCORD_INSTALLED
+        [DiscordClient]
+        private DiscordClient _client;
+        private Channel _discordChannel;
+        #endif
+
         private PluginConfig _config;
 
         void Init()
         {
             _config = Config.ReadObject<PluginConfig>();
             if (IsFirstRun()) LogCurrentTeams();
+        }
+
+        void OnServerInitialized()
+        {
+            #if DISCORD_INSTALLED
+            if (_config.PrintToDiscord) InitDiscord();
+            #else
+            if (_config.PrintToDiscord) PrintWarning("To enable Discord features, please define DISCORD_INSTALLED directive");
+            #endif
+        }
+
+        private void Unload()
+        {
+            #if DISCORD_INSTALLED
+            if (_client != null) Discord.CloseClient(_client);
+            #endif
+        }
+
+        private void PrintToConsole(string message) => Puts(message);
+
+        private void PrintToFile(string message)
+        {
+            var timestamp = DateTime.Now.ToString("HH:mm:ss");
+            message = $"{timestamp} | {message}";
+
+            LogToFile("common", message, this);
+        }
+
+        private void PrintToDiscord(string message)
+        {
+            #if DISCORD_INSTALLED
+            if (_client?.DiscordServer == null)
+            {
+                PrintWarning("Discord doesn't connected");
+                return;
+            }
+
+            if (_discordChannel == null)
+            {
+                PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
+                return;
+            }
+
+            var timestamp = DateTime.Now.ToString("HH:mm:ss");
+            message = $"{timestamp} | {message}";
+            _discordChannel.CreateMessage(_client, message);
+            #else
+            PrintWarning("To enable discord features, please define DISCORD_INSTALLED directive");
+            #endif
         }
 
         #region Log exist teams on first run
@@ -54,6 +117,51 @@ namespace Oxide.Plugins
                 ? userId.ToString()
                 : $"{user.Name} ({userId})";
         }
+        #endregion
+
+        #region Discord connection
+        #if DISCORD_INSTALLED
+        private void InitDiscord()
+        {
+            Puts("Init Discord connection...");
+            if (string.IsNullOrEmpty(_config.DiscordBot.ApiKey))
+            {
+                PrintError($"To enable Discord messages you need to specify 'DiscordConfig.ApiKey' value in config");
+                return;
+            }
+
+            Discord.CreateClient(this, _config.DiscordBot.ApiKey);
+        }
+
+        void Discord_GuildCreate(Guild guild)
+        {
+            if(_config.DiscordBot.EnableBotStatus)
+                _client.UpdateStatus(new Presence { Game = new Ext.Discord.DiscordObjects.Game
+                {
+                    Name = covalence.Server.Name,
+                    Type = ActivityType.Watching
+                }});
+
+            UpdateDiscordChannel();
+        }
+
+        void Discord_ChannelCreated(Channel channel) => UpdateDiscordChannel();
+        void Discord_ChannelUpdate(Channel updatedChannel, Channel oldChannel) => UpdateDiscordChannel();
+        void Discord_ChannelDelete(Channel channel) => UpdateDiscordChannel();
+        //void Discord_GuildUpdate(Guild guild) => UpdateDiscordChannel();
+
+        private void UpdateDiscordChannel()
+        {
+            _discordChannel = _client
+                .DiscordServer
+                .channels
+                .FirstOrDefault(x => x.name.Equals(_config.DiscordBot.ChannelName, StringComparison.InvariantCultureIgnoreCase));
+
+            if (_discordChannel == null) PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
+            else Puts($"Connected to discord channel: '{_discordChannel.name}' ({_discordChannel.id})");
+        }
+        
+        #endif
         #endregion
 
         #region Team hooks
@@ -112,7 +220,7 @@ namespace Oxide.Plugins
 
         private void OnTeamCreated(BasePlayer player, RelationshipManager.PlayerTeam team) => LogKey(
             "OnTeamCreated",
-            team.teamID, 
+            team.teamID,
             player.displayName,
             player.userID);
 
@@ -132,18 +240,9 @@ namespace Oxide.Plugins
 
         private void LogMessage(string message)
         {
-            if(_config.PrintToConsole) PrintToConsole(message);
-            if(_config.PrintToFile) PrintToFile(message);
-        }
-
-        private void PrintToConsole(string message) => Puts(message);
-
-        private void PrintToFile(string message)
-        {
-            var timestamp = DateTime.Now.ToString("HH:mm:ss");
-            message = $"{timestamp} | {message}";
-
-            LogToFile("common", message, this);
+            if (_config.PrintToConsole) PrintToConsole(message);
+            if (_config.PrintToFile) PrintToFile(message);
+            if (_config.PrintToDiscord) PrintToDiscord(message);
         }
 
         private string this[string key, params object[] args] => args?.Any() == true
@@ -199,6 +298,23 @@ namespace Oxide.Plugins
     
             [JsonProperty("Print logs to file")]
             public bool PrintToFile { get; set; } = true;
+    
+            [JsonProperty("Print logs to Discord")]
+            public bool PrintToDiscord { get; set; } = false;
+    
+            public PluginDiscordConfig DiscordBot = new PluginDiscordConfig();
+    
+            public class PluginDiscordConfig
+            {
+                [JsonProperty("Api key")] 
+                public string ApiKey { get; set; }
+    
+                [JsonProperty("Channel name")]
+                public string ChannelName { get; set; } = "teams-logger";
+    
+                [JsonProperty("Show server name in status")]
+                public bool EnableBotStatus { get; set; } = true;
+            }
         }
     
         private class PluginData
