@@ -160,44 +160,7 @@ namespace Oxide.Plugins
             if (_discordChannel == null) PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
             else Puts($"Connected to discord channel: '{_discordChannel.name}' ({_discordChannel.id})");
         }
-
-        /*
-        private void UpdateDiscordUsers()
-        {
-            if (_client?.DiscordServer == null)
-            {
-                PrintWarning("Users wasn't update cause Discord didn't connected");
-                return;
-            }
-
-            if (_client.DiscordServer.roles?.Any() != true)
-            {
-                PrintWarning("Users wasn't update cause no roles found on server");
-                return;
-            }
-
-            if (_client.DiscordServer.members?.Any() != true)
-            {
-                PrintWarning("Users wasn't update cause no members on server");
-                return;
-            }
-
-            var role = _client.DiscordServer.roles.FirstOrDefault(x => x.name.Equals(_config.DiscordLoggerRoleName, StringComparison.InvariantCultureIgnoreCase));
-            if(role == null)
-            {
-                PrintWarning($"Users wasn't update cause role '{_config.DiscordLoggerRoleName}' didn't found on server");
-                return;
-            }
-
-            var users = _client.DiscordServer.members.Where(x => x.roles.Contains(role.id)).ToList();
-            if (!users.Any()) PrintWarning($"No users found with role: {_config.DiscordLoggerRoleName}");
-            else
-            {
-                _discordChannels = new List<Channel>();
-                users[0].user.CreateDM(_client, channel => _discordChannels.Add(channel));
-            }
-        }
-        */
+        
         #endif
         #endregion
 
