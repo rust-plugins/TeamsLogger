@@ -14,7 +14,7 @@ using Oxide.Ext.Discord.DiscordObjects;
 
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "NickRimmer", "1.2")]
+    [Info("Teams Logger", "NickRimmer", "1.2.1")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
@@ -145,7 +145,7 @@ namespace Oxide.Plugins
             UpdateDiscordChannel();
         }
 
-        void Discord_ChannelCreated(Channel channel) => UpdateDiscordChannel();
+        void Discord_ChannelCreate(Channel channel) => UpdateDiscordChannel();
         void Discord_ChannelUpdate(Channel updatedChannel, Channel oldChannel) => UpdateDiscordChannel();
         void Discord_ChannelDelete(Channel channel) => UpdateDiscordChannel();
         //void Discord_GuildUpdate(Guild guild) => UpdateDiscordChannel();
