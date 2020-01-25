@@ -1,4 +1,4 @@
-#define DISCORD_INSTALLED
+#define DISCORD_NOT_INSTALLED
 
 using Oxide.Core;
 using System;
