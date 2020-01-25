@@ -11,22 +11,15 @@ Then restart plugin using command in server console `oxide.reload TeamsLogger`
 ```JSON
 {
   "Print logs to console": true,
-  "Print logs to file": true,
   "Print logs to Discord": false,
+  "Print logs to file": true,
 
-  "DiscordBot": {
-    "Api key": null,
-    "Channel name": "teams-logger",
-    "Show server name in status": true
-  }
+  "Discord hook url": null
 }
 ``` 
 
-### Discord extension
-To log messages into Discord, you'll need to install [Discord extension](https://umod.org/extensions/discord) and replace text `DISCORD_NOT_INSTALLED` by `DISCORD_INSTALLED` in the beginning of plugin file. 
-
-### Discord Api key
-To send messages, set `Api key` in configuration file. Instruction how to get this key you will find on [Discord extension page](https://umod.org/extensions/discord#getting-your-api-key).
+### Discord
+To send logs via Discord, you'll need to configure [Discord WebHook url](https://support.discordapp.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 ## Localization
 ```JSON
@@ -53,4 +46,4 @@ To file `\oxide\logs\TeamsLogger\teamslogger_common-####-##-##.txt`
 17:36:26 Disband 97  | Team leader: 'xan' (76561198051734570)
 ```
 ### To Discord
-![](https://i.imgur.com/VohQkDJ.png)
+![](https://i.imgur.com/tlJiSXg.png)
