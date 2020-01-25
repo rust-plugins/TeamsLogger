@@ -1,4 +1,4 @@
-Simple logger for teams provides additional logging. It can be configured to log into files, console output, Discord channel.
+Simple plugin to provide additional logging of teams events. It can be configured to log into files, console output, Discord channel.
 
 ## Installation
 To use this plugin with your Rust server, just copy `TeamsLogger.cs` into `\oxide\plugins` folder.  
