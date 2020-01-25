@@ -69,7 +69,7 @@ namespace Oxide.Plugins
 
             if (_discordChannel == null)
             {
-                PrintWarning($"Discord channel with name '{_config.DiscordChannelName}' not found");
+                PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
                 return;
             }
 
@@ -124,18 +124,24 @@ namespace Oxide.Plugins
         private void InitDiscord()
         {
             Puts("Init Discord connection...");
-            if (string.IsNullOrEmpty(_config.DiscordApiKey))
+            if (string.IsNullOrEmpty(_config.DiscordBot.ApiKey))
             {
-                PrintError($"To enable Discord messages you need to specify {nameof(_config.DiscordApiKey)} value in config");
+                PrintError($"To enable Discord messages you need to specify 'DiscordConfig.ApiKey' value in config");
                 return;
             }
 
-            Discord.CreateClient(this, _config.DiscordApiKey);
+            Discord.CreateClient(this, _config.DiscordBot.ApiKey);
         }
 
         void Discord_GuildCreate(Guild guild)
         {
-            _client.UpdateStatus(new Presence { Game = new Ext.Discord.DiscordObjects.Game { Name = covalence.Server.Name, Type = ActivityType.Watching } });
+            if(_config.DiscordBot.EnableBotStatus)
+                _client.UpdateStatus(new Presence { Game = new Ext.Discord.DiscordObjects.Game
+                {
+                    Name = covalence.Server.Name,
+                    Type = ActivityType.Watching
+                }});
+
             UpdateDiscordChannel();
         }
 
@@ -149,9 +155,9 @@ namespace Oxide.Plugins
             _discordChannel = _client
                 .DiscordServer
                 .channels
-                .FirstOrDefault(x => x.name.Equals(_config.DiscordChannelName, StringComparison.InvariantCultureIgnoreCase));
+                .FirstOrDefault(x => x.name.Equals(_config.DiscordBot.ChannelName, StringComparison.InvariantCultureIgnoreCase));
 
-            if (_discordChannel == null) PrintWarning($"Discord channel with name '{_config.DiscordChannelName}' not found");
+            if (_discordChannel == null) PrintWarning($"Discord channel with name '{_config.DiscordBot.ChannelName}' not found");
             else Puts($"Connected to discord channel: '{_discordChannel.name}' ({_discordChannel.id})");
         }
 
@@ -333,11 +339,19 @@ namespace Oxide.Plugins
             [JsonProperty("Print logs to Discord")]
             public bool PrintToDiscord { get; set; } = false;
     
-            [JsonProperty("Discord Api key")] 
-            public string DiscordApiKey { get; set; }
+            public PluginDiscordConfig DiscordBot = new PluginDiscordConfig();
     
-            [JsonProperty("Discord channel name")]
-            public string DiscordChannelName { get; set; } = "teams-logger";
+            public class PluginDiscordConfig
+            {
+                [JsonProperty("Api key")] 
+                public string ApiKey { get; set; }
+    
+                [JsonProperty("Channel name")]
+                public string ChannelName { get; set; } = "teams-logger";
+    
+                [JsonProperty("Show server name in status")]
+                public bool EnableBotStatus { get; set; } = true;
+            }
         }
     
         private class PluginData
