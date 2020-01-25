@@ -14,7 +14,7 @@ using Oxide.Ext.Discord.DiscordObjects;
 
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "NickRimmer", "1.2.1")]
+    [Info("Teams Logger", "NickRimmer", "1.3")]
     [Description("Simple plugin to log team events")]
     public class TeamsLogger : RustPlugin
     {
