@@ -46,10 +46,10 @@ To send logs via Discord, you'll need to configure [Discord WebHook url](https:/
 
 To file `oxide/logs/TeamsLogger\/eamslogger_common-####-##-##.txt`
 ```
-08:51:22 | OnTeamCreated | Team ID: 12 | Player: 'Ujiou' (76561198995214432) created a new team.
-08:51:24 | OnTeamLeave | Team ID: 12 | Player: 'Ujiou' (76561198995214432, is leader: True).
-08:51:25 | OnTeamCreated | Team ID: 13 | Player: 'Ujiou' (76561198995214432) created a new team.
-08:51:27 | OnTeamLeave | Team ID: 13 | Player: 'Ujiou' (76561198995214432, is leader: True).
-08:51:28 | OnTeamCreated | Team ID: 14 | Player: 'Ujiou' (76561198995214432) created a new team.
-08:51:33 | OnTeamLeave | Team ID: 14 | Player: 'Ujiou' (76561198995214432, is leader: True).
+08:51:22 | OnTeamCreated | Team ID: 12 | Player: 'Ujiou' (765611) created a new team.
+08:51:24 | OnTeamLeave | Team ID: 12 | Player: 'Ujiou' (765611, is leader: True).
+08:51:25 | OnTeamCreated | Team ID: 13 | Player: 'Ujiou' (765611) created a new team.
+08:51:27 | OnTeamLeave | Team ID: 13 | Player: 'Ujiou' (765611, is leader: True).
+08:51:28 | OnTeamCreated | Team ID: 14 | Player: 'Ujiou' (765611) created a new team.
+08:51:33 | OnTeamLeave | Team ID: 14 | Player: 'Ujiou' (765611, is leader: True).
 ```
