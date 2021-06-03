@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Teams Logger", "Ujiou", "1.5.0")]
+    [Info("Teams Logger", "Ujiou", "1.5.1")]
     [Description("Simple plugin to log team events.")]
     class TeamsLogger : CovalencePlugin
     {
@@ -222,7 +222,7 @@ namespace Oxide.Plugins
 
         private void LogCurrentTeams()
         {
-            var teams = RelationshipManager.Instance.teams;
+            var teams = RelationshipManager.ServerInstance.teams;
             foreach (var team in teams)
             {
                 OtherType("CurrentTeam", team.Key, string.Join(", ", team.Value.members.Select(GetUserInfo)));
