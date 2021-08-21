@@ -54,7 +54,7 @@ To file `oxide/logs/TeamsLogger\/eamslogger_common-####-##-##.txt`
 08:51:33 | OnTeamLeave | Team ID: 14 | Player: 'Ujiou' (765611, is leader: True).
 ```
 
-### Credits
+## Credits
 * **[0x89A](https://umod.org/user/0x89A)**, helped with slight issues occuring.
 * **[Ujiou](https://umod.org/user/Ujiou)**, current maintainer of this plugin. 
 * **[NickRimmer](https://umod.org/user/NickRimmer)**, the original owner of this plugin.
